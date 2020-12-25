@@ -17,9 +17,9 @@ def main():
 
     try:
         telnetlib.Telnet(host, int(port), 10)
-        print("Succeeded to telnet %s:%s ", host, port)
+        print("Succeeded to telnet %s:%s " % (host, port))
     except Exception as e:
-        print("Failed to telnet %s:%s : %s  ", host, port, str(e))
+        print('Failed to telnet %s:%s : %s  ' % (host, port, str(e)))
         return
 
     """
@@ -55,7 +55,7 @@ def main():
     try:
         master = modbus_tcp.TcpMaster(host=host, port=int(port), timeout_in_sec=5.0)
         master.set_timeout(5.0)
-        print("Connected to %s:%s ", host, port)
+        print("Connected to %s:%s " % (host, port))
         while True:
             print("read registers...")
             # point_id : 0
