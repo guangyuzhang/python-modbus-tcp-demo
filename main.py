@@ -83,7 +83,7 @@ def main():
             point_id = 0
             values = [r0, r1, r2, r3, r4]
             for value in values:
-                save_data = (None,point_id, db_time, str(value))
+                save_data = (None,point_id, db_time, str(value[0]))
                 point_id += 1
                 cursor.execute(save, save_data)
                 cnx.commit()
