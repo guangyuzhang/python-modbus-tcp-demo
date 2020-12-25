@@ -4,7 +4,6 @@ import telnetlib
 import time
 import config
 
-
 def main():
     if len(sys.argv) > 2:
         host = sys.argv[1]
