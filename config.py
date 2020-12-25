@@ -1,6 +1,6 @@
 modbus_tcp_db = {
     'user': 'root',
-    'password': '!Password1',
+    'password': 'root',
     'host': '127.0.0.1',
     'database': 'modbus_tcp_db',
     'port': 3306,

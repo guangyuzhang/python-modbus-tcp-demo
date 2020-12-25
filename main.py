@@ -3,7 +3,7 @@ from modbus_tk import modbus_tcp
 import telnetlib
 import time
 import config
-
+import mysql.connector
 
 def main():
     if len(sys.argv) > 2:
@@ -15,9 +15,9 @@ def main():
 
     try:
         telnetlib.Telnet(host, int(port), 10)
-        print("Succeeded to telnet %s:%s ", host, port)
+        print("Succeeded to telnet {}:{} ".format(host, port))
     except Exception as e:
-        print("Failed to telnet %s:%s : %s  ", host, port, str(e))
+        print("Failed to telnet {}:{} : {}  ".format(host, port, str(e)))
         return
 
     """
@@ -53,32 +53,54 @@ def main():
     try:
         master = modbus_tcp.TcpMaster(host=host, port=int(port), timeout_in_sec=5.0)
         master.set_timeout(5.0)
-        print("Connected to %s:%s ", host, port)
+        print("Connected to {}:{} ".format(host, port))
+        cnx = mysql.connector.connect(**config.modbus_tcp_db)
+        cursor = cnx.cursor()
         while True:
             print("read registers...")
             # point_id : 0
             r0 = master.execute(slave=1, function_code=3, starting_address=0, quantity_of_x=2, data_format='>l')
-            print("r0 = " + str(r0))
+            t0 = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+            v0 = r0[0]
+            print("r0 = " + str(v0) + ",时间为：" + str(t0))
             # point_id : 1
             r1 = master.execute(slave=1, function_code=3, starting_address=2, quantity_of_x=2, data_format='>l')
-            print("r1 = " + str(r1))
+            t1 = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+            v1 = r1[0]
+            print("r1 = " + str(v1) + ",时间为：" + str(t0))
             # point_id : 2
             r2 = master.execute(slave=1, function_code=3, starting_address=4, quantity_of_x=2, data_format='>l')
-            print("r2 = " + str(r2))
+            t2 = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+            v2 = r2[0]
+            print("r2 = " + str(v2) + ",时间为：" + str(t0))
             # point_id : 3
             r3 = master.execute(slave=1, function_code=3, starting_address=6, quantity_of_x=2, data_format='>l')
-            print("r3 = " + str(r3))
+            t3 = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+            v3 = r3[0]
+            print("r3 = " + str(v3) + ",时间为：" + str(t0))
             # point_id : 4
             r4 = master.execute(slave=1, function_code=3, starting_address=8, quantity_of_x=2, data_format='>l')
-            print("r4 = " + str(r4))
+            t4 = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+            v4 = r4[0]
+            print("r4 = " + str(v4) + ",时间为：" + str(t0))
 
             # todo: save point_id, datetime and value to database
+            insert = ('INSERT INTO point '
+                      '(point_id,datetime,value) '
+                      'VALUES(%s,%s,%s)')
+            insert_data = [(0, t0, v0), (1, t1, v1), (2, t2, v2), (3, t3, v3), (4, t4, v4)]
+            cursor.executemany(insert, insert_data)
+            cnx.commit()
 
             time.sleep(config.interval_in_seconds)
     except Exception as e:
         print(str(e))
     finally:
         master.close()
+        if cursor:
+            cursor.close()
+        if cnx:
+            cnx.close()
 
 
 if __name__ == "__main__":
