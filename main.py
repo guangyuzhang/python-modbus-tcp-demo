@@ -3,6 +3,8 @@ from modbus_tk import modbus_tcp
 import telnetlib
 import time
 import config
+import mysql.connector
+import datetime
 
 
 def main():
@@ -71,8 +73,25 @@ def main():
             # point_id : 4
             r4 = master.execute(slave=1, function_code=3, starting_address=8, quantity_of_x=2, data_format='>l')
             print("r4 = " + str(r4))
+            print(str(r4))
 
             # todo: save point_id, datetime and value to database
+            cnx = mysql.connector.connect(**config.modbus_tcp_db)
+            cursor = cnx.cursor()
+            db_time=datetime.datetime.now()
+            save = ( "insert into modbus_tcp_db values(%s,%s,%s,%s) ")
+            point_id = 0
+            values = [r0, r1, r2, r3, r4]
+            for value in values:
+                save_data = (None,point_id, db_time, str(value))
+                point_id += 1
+                cursor.execute(save, save_data)
+                cnx.commit()
+            cursor.close()
+            cnx.close()
+
+
+
 
             time.sleep(config.interval_in_seconds)
     except Exception as e:
