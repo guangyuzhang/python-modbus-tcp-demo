@@ -3,7 +3,8 @@ from modbus_tk import modbus_tcp
 import telnetlib
 import time
 import config
-
+import datetime
+import mysql.connector
 
 def main():
     if len(sys.argv) > 2:
@@ -73,12 +74,29 @@ def main():
             print("r4 = " + str(r4))
 
             # todo: save point_id, datetime and value to database
+            cnx = mysql.connector.connect(**config.modbus_tcp_db)
+            cursor = cnx.cursor()
+            add = ('INSERT INTO modbus_tcp_db values(%s,%s,%s,%s)')
+            point_id = 0
+            values = [r0,r1,r2,r3,r4]
+            i=0
+            while i <5:
+                dadetimes = datetime.datetime.now()
+                add_data = (None,point_id,dadetimes,str(values[i]))
+                i+=1
+                point_id+=1
+                cursor.execute(add, add_data)
+                cnx.commit()
+            print('insert success')
+            cursor.close()
+            cnx.close()
 
             time.sleep(config.interval_in_seconds)
     except Exception as e:
         print(str(e))
     finally:
         master.close()
+
 
 
 if __name__ == "__main__":
