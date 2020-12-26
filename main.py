@@ -1,8 +1,10 @@
 import sys
 from modbus_tk import modbus_tcp
 import telnetlib
+import mysql.connector
 import time
 import config
+import datetime
 
 
 def main():
@@ -50,10 +52,16 @@ def main():
 
     The variable struct.error is an exception raised on errors.
     """
+    cnx = None
+    cursor = None
+
     try:
         master = modbus_tcp.TcpMaster(host=host, port=int(port), timeout_in_sec=5.0)
         master.set_timeout(5.0)
         print("Connected to %s:%s ", host, port)
+        cnx = mysql.connector.connect(**config.modbus_tcp_db)
+        cursor = cnx.cursor()
+
         while True:
             print("read registers...")
             # point_id : 0
@@ -73,12 +81,37 @@ def main():
             print("r4 = " + str(r4))
 
             # todo: save point_id, datetime and value to database
+            query = ("INSERT INTO modbus_tcp(modbus_tcp_id, modbus_tcp_datetime, modbus_tcp_value)"
+                     "values(0, %(datetime)s, %(r0_value)s), "
+                     "(1, %(datetime)s, %(r1_value)s), "
+                     "(2, %(datetime)s, %(r2_value)s), "
+                     "(3, %(datetime)s, %(r3_value)s), "
+                     "(4, %(datetime)s, %(r4_value)s)")
+
+            modbus_tcp_values = {
+                "datetime":datetime.datetime.now(),
+                "r0_value":r0[0],
+                "r1_value":r1[0],
+                "r2_value":r2[0],
+                "r3_value":r3[0],
+                "r4_value":r4[0]
+            }
+
+            cursor.execute(query,modbus_tcp_values)
+
+            cnx.commit()
 
             time.sleep(config.interval_in_seconds)
     except Exception as e:
         print(str(e))
     finally:
         master.close()
+
+        if cursor:
+            cursor.close()
+
+        if cnx:
+            cnx.close()
 
 
 if __name__ == "__main__":
