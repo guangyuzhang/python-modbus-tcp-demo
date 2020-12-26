@@ -1,11 +1,16 @@
 import sys
+from datetime import datetime
+
 from modbus_tk import modbus_tcp
 import telnetlib
 import time
 import config
-
-
+import mysql.connector
 def main():
+
+    connector = None
+    cursor = None
+
     if len(sys.argv) > 2:
         host = sys.argv[1]
         port = sys.argv[2]
@@ -51,6 +56,8 @@ def main():
     The variable struct.error is an exception raised on errors.
     """
     try:
+        connector = mysql.connector.connect(**config.modbus_tcp_db)
+        cursor = connector.cursor()
         master = modbus_tcp.TcpMaster(host=host, port=int(port), timeout_in_sec=5.0)
         master.set_timeout(5.0)
         print("Connected to %s:%s ", host, port)
@@ -71,14 +78,22 @@ def main():
             # point_id : 4
             r4 = master.execute(slave=1, function_code=3, starting_address=8, quantity_of_x=2, data_format='>l')
             print("r4 = " + str(r4))
-
+            list = [r0, r1, r2, r3, r4]
             # todo: save point_id, datetime and value to database
-
+            for point_id in range(0, 5):
+                sql = "insert into modbus (point_id,value,datetime) values (%s,%s,%s)"
+                val = (point_id, list[point_id][0], datetime.today())
+                cursor.execute(sql, val)
+            connector.commit()
             time.sleep(config.interval_in_seconds)
     except Exception as e:
         print(str(e))
     finally:
         master.close()
+        cursor.close()
+        connector.close()
+
+
 
 
 if __name__ == "__main__":
