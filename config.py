@@ -1,8 +1,8 @@
 modbus_tcp_db = {
-    'user': 'root',
-    'password': '!Password1',
-    'host': '127.0.0.1',
-    'database': 'modbus_tcp_db',
+    'user': 'sql7382792',
+    'password': 'IglAneIsCE',
+    'host': 'sql7.freemysqlhosting.net',
+    'database': 'sql7382792',
     'port': 3306,
 }
 
